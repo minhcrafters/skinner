@@ -82,8 +82,6 @@ impl ToolState {
     }
 }
 
-// ──── Tool Operations ────
-
 pub fn apply_dot(
     x: u32,
     y: u32,
@@ -319,8 +317,6 @@ pub fn apply_ellipse(
     }
     changes
 }
-
-// ──── Helpers ────
 
 fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
     let mut points = Vec::new();

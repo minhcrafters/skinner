@@ -79,7 +79,7 @@ fn make_box(origin: [f32; 3], size: [f32; 3], uvs: &BodyPartUV) -> MeshData {
         uv,
     );
 
-    // Back face (-Z) — vertices wound CCW from outside (looking from -Z)
+    // Back face (-Z) - vertices wound CCW from outside (looking from -Z)
     let uv = uvs.back.to_gl_uvs();
     add_face(
         &mut mesh,
@@ -91,7 +91,7 @@ fn make_box(origin: [f32; 3], size: [f32; 3], uvs: &BodyPartUV) -> MeshData {
         uv,
     );
 
-    // Right face (+X) — character's left side
+    // Right face (+X) - character's left side
     let uv = uvs.left.to_gl_uvs();
     add_face(
         &mut mesh,
@@ -103,7 +103,7 @@ fn make_box(origin: [f32; 3], size: [f32; 3], uvs: &BodyPartUV) -> MeshData {
         uv,
     );
 
-    // Left face (-X) — character's right side
+    // Left face (-X) - character's right side
     let uv = uvs.right.to_gl_uvs();
     add_face(
         &mut mesh,
@@ -160,8 +160,6 @@ fn add_face(
     mesh.indices
         .extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
 }
-
-// ──── Player Model Generation ────
 
 use crate::uv_map;
 
@@ -222,21 +220,21 @@ impl PlayerModel {
         let overlay_expand = 0.5; // overlay is slightly larger
 
         // Base parts
-        let right_arm_uv = if is_slim { &uv_map::RIGHT_ARM_SLIM_BASE } else { &uv_map::RIGHT_ARM_BASE };
-        let left_arm_uv = if is_slim { &uv_map::LEFT_ARM_SLIM_BASE } else { &uv_map::LEFT_ARM_BASE };
+        let right_arm_uv = if is_slim {
+            &uv_map::RIGHT_ARM_SLIM_BASE
+        } else {
+            &uv_map::RIGHT_ARM_BASE
+        };
+        let left_arm_uv = if is_slim {
+            &uv_map::LEFT_ARM_SLIM_BASE
+        } else {
+            &uv_map::LEFT_ARM_BASE
+        };
 
         let head = make_box([0.0, 12.0, 0.0], [8.0, 8.0, 8.0], &uv_map::HEAD_BASE);
         let body = make_box([0.0, 2.0, 0.0], [8.0, 12.0, 4.0], &uv_map::BODY_BASE);
-        let right_arm = make_box(
-            [-arm_x_offset, 2.0, 0.0],
-            [arm_w, 12.0, 4.0],
-            right_arm_uv,
-        );
-        let left_arm = make_box(
-            [arm_x_offset, 2.0, 0.0],
-            [arm_w, 12.0, 4.0],
-            left_arm_uv,
-        );
+        let right_arm = make_box([-arm_x_offset, 2.0, 0.0], [arm_w, 12.0, 4.0], right_arm_uv);
+        let left_arm = make_box([arm_x_offset, 2.0, 0.0], [arm_w, 12.0, 4.0], left_arm_uv);
         let right_leg = make_box(
             [-2.0, -10.0, 0.0],
             [4.0, 12.0, 4.0],
@@ -246,8 +244,16 @@ impl PlayerModel {
 
         // Overlay parts (slightly expanded)
         let e = overlay_expand;
-        let right_sleeve_uv = if is_slim { &uv_map::RIGHT_ARM_SLIM_OVERLAY } else { &uv_map::RIGHT_ARM_OVERLAY };
-        let left_sleeve_uv = if is_slim { &uv_map::LEFT_ARM_SLIM_OVERLAY } else { &uv_map::LEFT_ARM_OVERLAY };
+        let right_sleeve_uv = if is_slim {
+            &uv_map::RIGHT_ARM_SLIM_OVERLAY
+        } else {
+            &uv_map::RIGHT_ARM_OVERLAY
+        };
+        let left_sleeve_uv = if is_slim {
+            &uv_map::LEFT_ARM_SLIM_OVERLAY
+        } else {
+            &uv_map::LEFT_ARM_OVERLAY
+        };
 
         let hat = make_box(
             [0.0, 12.0, 0.0],

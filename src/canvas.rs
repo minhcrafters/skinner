@@ -199,7 +199,8 @@ pub fn show_canvas(
             let px = px as u32;
             let py = py as u32;
             canvas.hovered_pixel = Some((px, py));
-            canvas.hovered_region = uv_map::region_at_pixel(px, py, skin.model == crate::skin::SkinModel::Slim);
+            canvas.hovered_region =
+                uv_map::region_at_pixel(px, py, skin.model == crate::skin::SkinModel::Slim);
 
             let cell_rect = egui::Rect::from_min_size(
                 canvas_rect.left_top()
@@ -215,7 +216,6 @@ pub fn show_canvas(
         }
     }
 
-    // ──── Selection tool interaction ────
     if tool_state.current_tool == Tool::Select {
         if let Some((px, py)) = canvas.hovered_pixel {
             let px_i = px as i32;
@@ -294,7 +294,6 @@ pub fn show_canvas(
         }
     }
 
-    // ──── Paint tool interaction (non-select tools) ────
     if tool_state.current_tool != Tool::Select {
         if let Some((px, py)) = canvas.hovered_pixel {
             if tool_state.current_tool == Tool::ColorPicker && response.clicked() {
@@ -503,7 +502,13 @@ fn draw_grid(painter: &egui::Painter, rect: egui::Rect, zoom: f32) {
     }
 }
 
-fn draw_region_labels(painter: &egui::Painter, rect: egui::Rect, zoom: f32, show_overlays: bool, is_slim: bool) {
+fn draw_region_labels(
+    painter: &egui::Painter,
+    rect: egui::Rect,
+    zoom: f32,
+    show_overlays: bool,
+    is_slim: bool,
+) {
     for lr in uv_map::labeled_rects(is_slim) {
         if lr.is_overlay && !show_overlays {
             continue;

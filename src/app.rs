@@ -108,7 +108,7 @@ impl SkinnerApp {
                 self.tool_state.brush_size = (self.tool_state.brush_size + 1).min(8);
             }
 
-            // Escape — cancel selection
+            // Escape - cancel selection
             if i.key_pressed(egui::Key::Escape) && self.selection.active {
                 let sel_before = self.selection.snapshot();
                 let changes = self.selection.cancel(&mut self.skin);
@@ -153,7 +153,7 @@ impl SkinnerApp {
                 self.new_skin();
             }
 
-            // Ctrl+D — deselect
+            // Ctrl+D - deselect
             if i.modifiers.ctrl && i.key_pressed(egui::Key::D) {
                 let sel_before = self.selection.snapshot();
                 let changes = self.selection.deselect(&mut self.skin);
@@ -168,7 +168,7 @@ impl SkinnerApp {
                 self.status_message = "Deselected".to_string();
             }
 
-            // Ctrl+C — copy selection
+            // Ctrl+C - copy selection
             if i.modifiers.ctrl && i.key_pressed(egui::Key::C) {
                 if self.selection.active && self.selection.pixels.is_some() {
                     self.selection.copy_to_clipboard();
@@ -176,7 +176,7 @@ impl SkinnerApp {
                 }
             }
 
-            // Ctrl+V — paste from clipboard
+            // Ctrl+V - paste from clipboard
             if i.modifiers.ctrl && i.key_pressed(egui::Key::V) {
                 if self.selection.has_clipboard() {
                     let sel_before = self.selection.snapshot();
@@ -195,7 +195,7 @@ impl SkinnerApp {
                 }
             }
 
-            // Ctrl+X — cut (copy then we already have it cut)
+            // Ctrl+X - cut (copy then we already have it cut)
             if i.modifiers.ctrl && i.key_pressed(egui::Key::X) {
                 if self.selection.active && self.selection.pixels.is_some() {
                     self.selection.copy_to_clipboard();

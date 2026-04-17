@@ -265,8 +265,6 @@ impl Selection {
         self.clipboard.is_some()
     }
 
-    // ──── Transforms ────
-
     pub fn flip_h(&mut self) {
         if let Some(ref mut pixels) = self.pixels {
             let w = self.w as usize;

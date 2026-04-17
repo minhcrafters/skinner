@@ -374,7 +374,7 @@ pub fn history_panel(ui: &mut egui::Ui, history: &History) -> Option<usize> {
                 target = Some(0);
             }
 
-            // Undo entries (already done — shown normally)
+            // Undo entries (already done - shown normally)
             for (i, desc) in undo_descs.iter().enumerate() {
                 let entry_idx = i + 1; // 1-based position
                 let is_latest = i == undo_count - 1;
@@ -391,7 +391,7 @@ pub fn history_panel(ui: &mut egui::Ui, history: &History) -> Option<usize> {
                 }
             }
 
-            // Redo entries (future — shown dimmed)
+            // Redo entries (future - shown dimmed)
             for (i, desc) in redo_descs.iter().enumerate() {
                 let entry_idx = undo_count + i + 1;
                 let label = egui::RichText::new(format!("  {desc}"))

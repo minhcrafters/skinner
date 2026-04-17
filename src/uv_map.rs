@@ -49,8 +49,6 @@ pub struct LabeledRect {
     pub is_overlay: bool,
 }
 
-// ──── Base Layer Regions ────
-
 pub const HEAD_BASE: BodyPartUV = BodyPartUV {
     right: UVRect::new(0, 8, 8, 8),
     front: UVRect::new(8, 8, 8, 8),
@@ -87,7 +85,6 @@ pub const LEFT_ARM_BASE: BodyPartUV = BodyPartUV {
     bottom: UVRect::new(40, 48, 4, 4),
 };
 
-// ──── Slim Arm Base Layers ────
 pub const RIGHT_ARM_SLIM_BASE: BodyPartUV = BodyPartUV {
     right: UVRect::new(40, 20, 4, 12),
     front: UVRect::new(44, 20, 3, 12),
@@ -123,8 +120,6 @@ pub const LEFT_LEG_BASE: BodyPartUV = BodyPartUV {
     top: UVRect::new(20, 48, 4, 4),
     bottom: UVRect::new(24, 48, 4, 4),
 };
-
-// ──── Overlay Layer Regions ────
 
 pub const HEAD_OVERLAY: BodyPartUV = BodyPartUV {
     right: UVRect::new(32, 8, 8, 8),
@@ -162,7 +157,6 @@ pub const LEFT_ARM_OVERLAY: BodyPartUV = BodyPartUV {
     bottom: UVRect::new(56, 48, 4, 4),
 };
 
-// ──── Slim Arm Overlay Layers ────
 pub const RIGHT_ARM_SLIM_OVERLAY: BodyPartUV = BodyPartUV {
     right: UVRect::new(40, 36, 4, 12),
     front: UVRect::new(44, 36, 3, 12),
@@ -221,16 +215,32 @@ pub fn labeled_rects(is_slim: bool) -> Vec<LabeledRect> {
     let base_parts = [
         HEAD_BASE,
         BODY_BASE,
-        if is_slim { RIGHT_ARM_SLIM_BASE } else { RIGHT_ARM_BASE },
-        if is_slim { LEFT_ARM_SLIM_BASE } else { LEFT_ARM_BASE },
+        if is_slim {
+            RIGHT_ARM_SLIM_BASE
+        } else {
+            RIGHT_ARM_BASE
+        },
+        if is_slim {
+            LEFT_ARM_SLIM_BASE
+        } else {
+            LEFT_ARM_BASE
+        },
         RIGHT_LEG_BASE,
         LEFT_LEG_BASE,
     ];
     let overlay_parts = [
         HEAD_OVERLAY,
         BODY_OVERLAY,
-        if is_slim { RIGHT_ARM_SLIM_OVERLAY } else { RIGHT_ARM_OVERLAY },
-        if is_slim { LEFT_ARM_SLIM_OVERLAY } else { LEFT_ARM_OVERLAY },
+        if is_slim {
+            RIGHT_ARM_SLIM_OVERLAY
+        } else {
+            RIGHT_ARM_OVERLAY
+        },
+        if is_slim {
+            LEFT_ARM_SLIM_OVERLAY
+        } else {
+            LEFT_ARM_OVERLAY
+        },
         RIGHT_LEG_OVERLAY,
         LEFT_LEG_OVERLAY,
     ];
