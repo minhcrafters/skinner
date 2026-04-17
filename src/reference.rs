@@ -54,18 +54,15 @@ impl ReferenceImage {
                 if let Some(tex) = &self.texture {
                     let available = ui.available_size();
 
-                    // Allocate the full available space for the image area
                     let (response, painter) =
                         ui.allocate_painter(available, egui::Sense::click_and_drag());
 
-                    // Handle panning (middle or right mouse button)
                     if response.dragged_by(egui::PointerButton::Middle)
                         || response.dragged_by(egui::PointerButton::Secondary)
                     {
                         self.pan_offset += response.drag_delta();
                     }
 
-                    // Handle zooming
                     let scroll = ui.input(|i| i.smooth_scroll_delta.y);
                     if response.hovered() && scroll.abs() > 0.0 {
                         let old_zoom = self.zoom;
@@ -89,7 +86,6 @@ impl ReferenceImage {
                     );
                     let canvas_rect = egui::Rect::from_min_size(canvas_origin, canvas_pixel_size);
 
-                    // Draw checkerboard background for transparent images
                     draw_checkerboard(&painter, canvas_rect, self.zoom.max(1.0));
 
                     painter.image(
@@ -99,7 +95,6 @@ impl ReferenceImage {
                         egui::Color32::WHITE,
                     );
 
-                    // Handle color picking
                     if response.dragged_by(egui::PointerButton::Primary) || response.clicked() {
                         if let Some(pos) = response.interact_pointer_pos().or(response.hover_pos())
                         {

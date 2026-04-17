@@ -1,4 +1,3 @@
-/// Orbit camera for the 3D viewport.
 use glam::{Mat4, Vec3};
 
 pub struct OrbitCamera {
@@ -39,7 +38,6 @@ impl OrbitCamera {
         self.projection_matrix(aspect) * self.view_matrix()
     }
 
-    /// Handle orbit drag (left-click drag)
     pub fn orbit(&mut self, dx: f32, dy: f32) {
         self.yaw += dx * 0.01;
         self.pitch += dy * 0.01;
@@ -50,13 +48,11 @@ impl OrbitCamera {
         );
     }
 
-    /// Handle zoom (scroll wheel)
     pub fn zoom(&mut self, delta: f32) {
         self.distance *= 1.0 - delta * 0.1;
         self.distance = self.distance.clamp(10.0, 200.0);
     }
 
-    /// Handle pan (middle-click drag)
     pub fn pan(&mut self, dx: f32, dy: f32) {
         let right = Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin());
         let up = Vec3::Y;

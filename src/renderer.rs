@@ -1,5 +1,3 @@
-/// OpenGL 3D renderer using glow, rendered via egui's PaintCallback.
-/// Handles shader compilation, texture upload, and model rendering.
 use eframe::glow;
 use glow::HasContext;
 
@@ -13,15 +11,11 @@ pub struct Renderer3D {
     ebo: glow::Buffer,
     texture: glow::Texture,
     index_count: i32,
-    /// Number of indices belonging to base (non-overlay) parts
     base_index_count: i32,
-    /// Pending pixel data to upload to the GL texture
     pending_pixels: Option<Vec<u8>>,
-    /// Whether the mesh needs to be re-uploaded
     mesh_dirty: bool,
     model: PlayerModel,
     visibility: PartVisibility,
-    /// Track which skin model type generated the current mesh
     skin_model: SkinModel,
 }
 
@@ -59,7 +53,6 @@ impl Renderer3D {
         "#;
 
         unsafe {
-            // Compile shaders
             let program = gl.create_program().expect("Cannot create GL program");
 
             let shaders = [
@@ -95,12 +88,10 @@ impl Renderer3D {
                 gl.delete_shader(shader);
             }
 
-            // Create VAO, VBO, EBO
             let vao = gl.create_vertex_array().expect("Cannot create VAO");
             let vbo = gl.create_buffer().expect("Cannot create VBO");
             let ebo = gl.create_buffer().expect("Cannot create EBO");
 
-            // Create texture
             let texture = gl.create_texture().expect("Cannot create texture");
             gl.bind_texture(glow::TEXTURE_2D, Some(texture));
             gl.tex_parameter_i32(
@@ -123,7 +114,6 @@ impl Renderer3D {
                 glow::TEXTURE_WRAP_T,
                 glow::CLAMP_TO_EDGE as i32,
             );
-            // Upload a blank 64x64 texture
             let blank = vec![0u8; 64 * 64 * 4];
             gl.tex_image_2d(
                 glow::TEXTURE_2D,
@@ -162,12 +152,10 @@ impl Renderer3D {
         }
     }
 
-    /// Schedule pixel data for texture upload (called from the main thread)
     pub fn set_pending_pixels(&mut self, pixels: Vec<u8>) {
         self.pending_pixels = Some(pixels);
     }
 
-    /// Regenerate the model mesh (e.g., when switching slim/classic)
     pub fn set_model_type(&mut self, model: SkinModel) {
         if self.skin_model != model {
             self.skin_model = model;
@@ -176,7 +164,6 @@ impl Renderer3D {
         }
     }
 
-    /// Update visibility, only marking dirty if it actually changed
     pub fn set_visibility(&mut self, vis: PartVisibility) {
         if self.visibility != vis {
             self.visibility = vis;
@@ -192,7 +179,6 @@ impl Renderer3D {
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
 
-            // Upload vertex data
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.vbo));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
@@ -200,7 +186,6 @@ impl Renderer3D {
                 glow::STATIC_DRAW,
             );
 
-            // Upload index data
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo));
             gl.buffer_data_u8_slice(
                 glow::ELEMENT_ARRAY_BUFFER,
@@ -210,15 +195,12 @@ impl Renderer3D {
 
             let stride = std::mem::size_of::<Vertex>() as i32;
 
-            // Position: location 0, 3 floats, offset 0
             gl.enable_vertex_attrib_array(0);
             gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, stride, 0);
 
-            // UV: location 1, 2 floats, offset 12
             gl.enable_vertex_attrib_array(1);
             gl.vertex_attrib_pointer_f32(1, 2, glow::FLOAT, false, stride, 12);
 
-            // Normal: location 2, 3 floats, offset 20
             gl.enable_vertex_attrib_array(2);
             gl.vertex_attrib_pointer_f32(2, 3, glow::FLOAT, false, stride, 20);
 
@@ -228,7 +210,6 @@ impl Renderer3D {
         self.mesh_dirty = false;
     }
 
-    /// Paint the 3D model. Called from within a PaintCallback.
     pub fn paint(
         &mut self,
         gl: &glow::Context,
@@ -237,7 +218,6 @@ impl Renderer3D {
         clip_rect: [f32; 4],
     ) {
         unsafe {
-            // Upload pending texture if any
             if let Some(pixels) = self.pending_pixels.take() {
                 gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
                 gl.tex_sub_image_2d(
@@ -254,7 +234,6 @@ impl Renderer3D {
                 gl.bind_texture(glow::TEXTURE_2D, None);
             }
 
-            // Re-upload mesh if visibility/model changed
             if self.mesh_dirty {
                 self.upload_mesh(gl);
             }
@@ -263,7 +242,6 @@ impl Renderer3D {
                 return;
             }
 
-            // Save GL state that egui expects
             let prev_blend = gl.is_enabled(glow::BLEND);
             let prev_depth = gl.is_enabled(glow::DEPTH_TEST);
             let prev_cull = gl.is_enabled(glow::CULL_FACE);
@@ -277,7 +255,6 @@ impl Renderer3D {
                 (clip_rect[3] - clip_rect[1]) as i32,
             );
 
-            // Set up our state
             gl.enable(glow::DEPTH_TEST);
             gl.depth_func(glow::LEQUAL);
             gl.depth_mask(true);
@@ -286,16 +263,13 @@ impl Renderer3D {
             gl.enable(glow::BLEND);
             gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
 
-            // Clear depth within our scissored viewport
             gl.clear(glow::DEPTH_BUFFER_BIT);
 
-            // Set up shader and uniforms
             gl.use_program(Some(self.program));
 
             let mvp_loc = gl.get_uniform_location(self.program, "u_mvp");
             gl.uniform_matrix_4_f32_slice(mvp_loc.as_ref(), false, mvp);
 
-            // Bind texture
             gl.active_texture(glow::TEXTURE0);
             gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
             let tex_loc = gl.get_uniform_location(self.program, "u_tex");
@@ -303,7 +277,6 @@ impl Renderer3D {
 
             gl.bind_vertex_array(Some(self.vao));
 
-            // Pass 1: Draw base parts
             if self.base_index_count > 0 {
                 gl.depth_mask(true);
                 gl.draw_elements(
@@ -314,7 +287,6 @@ impl Renderer3D {
                 );
             }
 
-            // Pass 2: Draw overlay parts
             let overlay_count = self.index_count - self.base_index_count;
             if overlay_count > 0 {
                 let offset_bytes = self.base_index_count as i32 * std::mem::size_of::<u32>() as i32;
@@ -328,7 +300,6 @@ impl Renderer3D {
 
             gl.bind_vertex_array(None);
 
-            // Restore GL state
             gl.disable(glow::SCISSOR_TEST);
             gl.use_program(None);
             gl.bind_texture(glow::TEXTURE_2D, None);

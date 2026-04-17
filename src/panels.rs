@@ -4,10 +4,8 @@ use crate::mesh::PartVisibility;
 use crate::palette::Palette;
 use crate::skin::SkinModel;
 use crate::tools::{Tool, ToolState};
-/// UI panel definitions: tool panel, color/palette panel, layer panel, history panel.
 use eframe::egui;
 
-/// Left-side tool panel
 pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
     ui.heading("Tools");
     ui.add_space(4.0);
@@ -35,7 +33,6 @@ pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
     ui.separator();
     ui.add_space(4.0);
 
-    // Brush size
     ui.label("Brush Size:");
     let mut size = tool_state.brush_size as f32;
     ui.add(egui::Slider::new(&mut size, 1.0..=8.0).step_by(1.0));
@@ -45,7 +42,6 @@ pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
     ui.separator();
     ui.add_space(4.0);
 
-    // Mirror toggles
     ui.label("Mirror:");
     ui.checkbox(&mut tool_state.mirror_x, "Horizontal (X)");
     ui.checkbox(&mut tool_state.mirror_y, "Vertical (Y)");
@@ -54,14 +50,12 @@ pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
     ui.separator();
     ui.add_space(4.0);
 
-    // Quick color preview
     let [r, g, b, a] = tool_state.primary_color;
     let primary = egui::Color32::from_rgba_unmultiplied(r, g, b, a);
     let [r, g, b, a] = tool_state.secondary_color;
     let secondary = egui::Color32::from_rgba_unmultiplied(r, g, b, a);
 
     ui.horizontal(|ui| {
-        // Primary color swatch
         let (rect, _) = ui.allocate_exact_size(egui::vec2(24.0, 24.0), egui::Sense::hover());
         ui.painter().rect_filled(rect, 2.0, primary);
         ui.painter().rect_stroke(
@@ -71,7 +65,6 @@ pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
             egui::StrokeKind::Middle,
         );
 
-        // Secondary color swatch
         let (rect, _) = ui.allocate_exact_size(egui::vec2(24.0, 24.0), egui::Sense::hover());
         ui.painter().rect_filled(rect, 2.0, secondary);
         ui.painter().rect_stroke(
@@ -87,12 +80,10 @@ pub fn tool_panel(ui: &mut egui::Ui, tool_state: &mut ToolState) {
     });
 }
 
-/// Right-side color and palette panel
 pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut Palette) {
     ui.heading("Color");
     ui.add_space(4.0);
 
-    // Color picker
     let mut color = egui::Color32::from_rgba_unmultiplied(
         tool_state.primary_color[0],
         tool_state.primary_color[1],
@@ -134,7 +125,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
     ui.separator();
     ui.add_space(4.0);
 
-    // Palette header with name
     ui.horizontal(|ui| {
         ui.heading("Palette");
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -149,7 +139,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
     );
     ui.add_space(2.0);
 
-    // Palette grid — right-click to remove
     let cols = 6;
     let swatch_size = 18.0;
     let spacing = 2.0;
@@ -194,7 +183,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
 
     ui.add_space(4.0);
 
-    // Add / manage buttons
     ui.horizontal(|ui| {
         if ui
             .small_button("+ Add Color")
@@ -214,7 +202,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
 
     ui.add_space(2.0);
 
-    // Import / Export
     ui.horizontal(|ui| {
         if ui
             .small_button("Import .gpl")
@@ -246,7 +233,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
 
     ui.add_space(4.0);
 
-    // Recent colors
     if !palette.recent.is_empty() {
         ui.label("Recent:");
         ui.horizontal_wrapped(|ui| {
@@ -264,7 +250,6 @@ pub fn color_panel(ui: &mut egui::Ui, tool_state: &mut ToolState, palette: &mut 
     }
 }
 
-/// Layer/visibility panel
 pub fn layer_panel(
     ui: &mut egui::Ui,
     visibility: &mut PartVisibility,
@@ -274,7 +259,6 @@ pub fn layer_panel(
     ui.heading("Layers");
     ui.add_space(4.0);
 
-    // Model type
     ui.horizontal(|ui| {
         ui.label("Model:");
         if ui
@@ -353,8 +337,6 @@ pub fn layer_panel(
     ui.add_space(4.0);
 }
 
-/// History panel showing undo/redo entries.
-/// Returns `Some(target_undo_count)` if the user clicked an entry to jump to.
 pub fn history_panel(ui: &mut egui::Ui, history: &History) -> Option<usize> {
     ui.heading("History");
     ui.add_space(4.0);
@@ -424,7 +406,6 @@ pub fn history_panel(ui: &mut egui::Ui, history: &History) -> Option<usize> {
     target
 }
 
-/// Parse hex color string like "#RRGGBB" or "#RRGGBBAA"
 fn parse_hex_color(s: &str) -> Option<[u8; 4]> {
     let s = s.trim().trim_start_matches('#');
     match s.len() {

@@ -1,18 +1,12 @@
-/// Core skin texture data — a 64×64 RGBA pixel buffer.
-/// This is the single source of truth for skin data. Both the 2D canvas
-/// and 3D viewport read from and write to the same SkinTexture.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SkinModel {
-    /// Steve model: 4-pixel wide arms
     Classic,
-    /// Alex model: 3-pixel wide arms
     Slim,
 }
 
 #[derive(Clone)]
 pub struct SkinTexture {
-    /// RGBA pixels stored row-major, top-to-bottom, left-to-right
     pixels: Vec<[u8; 4]>,
     pub width: u32,
     pub height: u32,
@@ -63,7 +57,6 @@ impl SkinTexture {
         self.dirty = false;
     }
 
-    /// Returns a flat byte slice [R,G,B,A, R,G,B,A, ...] suitable for GL texture upload
     pub fn pixels_as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.pixels.len() * 4);
         for pixel in &self.pixels {
@@ -72,7 +65,6 @@ impl SkinTexture {
         bytes
     }
 
-    /// Create from raw RGBA byte data
     pub fn from_rgba(data: &[u8], width: u32, height: u32) -> Self {
         let pixel_count = (width * height) as usize;
         let mut pixels = vec![[0u8; 4]; pixel_count];
@@ -96,7 +88,6 @@ impl SkinTexture {
         }
     }
 
-    /// Create an egui ColorImage from the skin pixels
     pub fn to_color_image(&self) -> eframe::egui::ColorImage {
         let mut rgba = Vec::with_capacity((self.width * self.height * 4) as usize);
         for pixel in &self.pixels {

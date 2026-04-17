@@ -1,8 +1,3 @@
-/// Undo/redo history using delta-based pixel changes.
-/// Each entry stores only the pixels that changed, not full snapshots.
-/// Selection transforms store before/after snapshots of the floating buffer.
-/// Operations that modify the selection (select, commit, cancel, paste) also
-/// store selection state so undo/redo correctly reverts selection position.
 use crate::selection::Selection;
 use crate::skin::SkinTexture;
 
@@ -14,8 +9,6 @@ pub struct PixelChange {
     pub new_color: [u8; 4],
 }
 
-/// Snapshot of the floating selection buffer state for undo/redo of transforms.
-/// None means "no active selection".
 #[derive(Clone)]
 pub struct SelectionSnapshot {
     pub pixels: Vec<[u8; 4]>,
@@ -25,18 +18,12 @@ pub struct SelectionSnapshot {
     pub y: i32,
 }
 
-/// A history entry is either a set of pixel changes or a selection transform.
 pub enum HistoryAction {
-    /// Pixel-level changes on the skin texture (drawing, bucket, etc.)
-    /// Optionally also tracks selection state change (for select/cut, commit, cancel, paste).
     PixelChanges {
         changes: Vec<PixelChange>,
-        /// Selection state before the operation. None = selection was inactive.
         sel_before: Option<SelectionSnapshot>,
-        /// Selection state after the operation. None = selection became inactive.
         sel_after: Option<SelectionSnapshot>,
     },
-    /// A transform applied to the floating selection buffer (before, after)
     SelectionTransform {
         before: SelectionSnapshot,
         after: SelectionSnapshot,
@@ -49,8 +36,6 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    /// Create a pixel-change history entry with no selection state tracking.
-    /// Use for pure drawing operations (pencil, eraser, bucket, shapes).
     pub fn from_changes(description: String, changes: Vec<PixelChange>) -> Self {
         Self {
             description,
@@ -62,8 +47,6 @@ impl HistoryEntry {
         }
     }
 
-    /// Create a pixel-change history entry that also tracks selection state.
-    /// Use for operations that modify the selection (select/cut, commit, cancel, paste).
     pub fn from_changes_with_selection(
         description: String,
         changes: Vec<PixelChange>,
@@ -190,17 +173,14 @@ impl History {
         self.redo_stack.len()
     }
 
-    /// Get descriptions of undo entries (oldest first)
     pub fn undo_descriptions(&self) -> Vec<&str> {
         self.undo_stack.iter().map(|e| e.description.as_str()).collect()
     }
 
-    /// Get descriptions of redo entries (next-to-redo first)
     pub fn redo_descriptions(&self) -> Vec<&str> {
         self.redo_stack.iter().rev().map(|e| e.description.as_str()).collect()
     }
 
-    /// Undo multiple steps to reach a target undo stack size
     pub fn undo_to(&mut self, target_undo_count: usize, skin: &mut SkinTexture, selection: &mut Selection) {
         while self.undo_stack.len() > target_undo_count {
             if !self.undo(skin, selection) {
@@ -209,7 +189,6 @@ impl History {
         }
     }
 
-    /// Redo multiple steps to reach a target undo stack size
     pub fn redo_to(&mut self, target_undo_count: usize, skin: &mut SkinTexture, selection: &mut Selection) {
         while self.undo_stack.len() < target_undo_count {
             if !self.redo(skin, selection) {

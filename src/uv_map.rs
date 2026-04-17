@@ -1,8 +1,5 @@
-/// Complete UV region definitions for the 64×64 Minecraft skin format.
-/// Every body part face maps to a specific rectangle in the skin texture.
 use eframe::egui;
 
-/// A rectangular region on the skin texture
 #[derive(Clone, Copy, Debug)]
 pub struct UVRect {
     pub x: u32,
@@ -16,16 +13,10 @@ impl UVRect {
         Self { x, y, w, h }
     }
 
-    /// Check if a pixel coordinate falls within this rect
     pub fn contains(&self, px: u32, py: u32) -> bool {
         px >= self.x && px < self.x + self.w && py >= self.y && py < self.y + self.h
     }
 
-    /// Convert to OpenGL UV coordinates.
-    /// Texture data is uploaded top-to-bottom, so the first row sits at V=0
-    /// and the last row at V=1. No Y-flip needed.
-    /// UVs are inset by half a texel to prevent sampling across region
-    /// boundaries, which causes visible seams.
     pub fn to_gl_uvs(&self) -> [[f32; 2]; 4] {
         let tex_w = 64.0_f32;
         let tex_h = 64.0_f32;
@@ -40,7 +31,6 @@ impl UVRect {
     }
 }
 
-/// UV regions for all 6 faces of a body part
 #[derive(Clone, Copy, Debug)]
 pub struct BodyPartUV {
     pub right: UVRect,  // -X face (character's right)
@@ -51,7 +41,6 @@ pub struct BodyPartUV {
     pub bottom: UVRect, // -Y face
 }
 
-/// A named region for display in the 2D canvas
 #[derive(Clone, Debug)]
 pub struct LabeledRect {
     pub name: String,
@@ -210,7 +199,6 @@ pub const LEFT_LEG_OVERLAY: BodyPartUV = BodyPartUV {
     bottom: UVRect::new(8, 48, 4, 4),
 };
 
-/// Get labeled rectangles for drawing region outlines on the 2D canvas
 pub fn labeled_rects(is_slim: bool) -> Vec<LabeledRect> {
     let mut rects = Vec::new();
     let base_colors = [
@@ -285,7 +273,6 @@ fn faces_of(part: &BodyPartUV) -> Vec<(&'static str, UVRect)> {
     ]
 }
 
-/// Find which region a pixel belongs to, returns region name
 pub fn region_at_pixel(x: u32, y: u32, is_slim: bool) -> Option<String> {
     for lr in labeled_rects(is_slim) {
         // ... (check overlay layers first, or standard list order handles it)

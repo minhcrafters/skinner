@@ -1,5 +1,3 @@
-/// Color palette management with built-in Minecraft-appropriate colors,
-/// custom color support, and GIMP palette (.gpl) import/export.
 use std::path::Path;
 
 pub struct Palette {
@@ -17,27 +15,23 @@ impl Palette {
         }
     }
 
-    /// Add the current primary color to the palette
     pub fn add_color(&mut self, color: [u8; 4]) {
         if !self.colors.contains(&color) {
             self.colors.push(color);
         }
     }
 
-    /// Remove a color at the given index
     pub fn remove_color(&mut self, index: usize) {
         if index < self.colors.len() {
             self.colors.remove(index);
         }
     }
 
-    /// Reset to default palette
     pub fn reset(&mut self) {
         self.colors = default_palette();
         self.name = "Default".to_string();
     }
 
-    /// Export palette in GIMP .gpl format
     pub fn export_gpl(&self) -> String {
         let mut out = String::new();
         out.push_str("GIMP Palette\n");
@@ -59,7 +53,6 @@ impl Palette {
         out
     }
 
-    /// Import palette from GIMP .gpl format
     pub fn import_gpl(content: &str) -> Result<Self, String> {
         let mut colors = Vec::new();
         let mut name = "Imported".to_string();
@@ -136,14 +129,12 @@ impl Palette {
         })
     }
 
-    /// Load from a .gpl file
     pub fn load_from_file(path: &Path) -> Result<Self, String> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Failed to read palette file: {e}"))?;
         Self::import_gpl(&content)
     }
 
-    /// Save to a .gpl file
     pub fn save_to_file(&self, path: &Path) -> Result<(), String> {
         let content = self.export_gpl();
         std::fs::write(path, content).map_err(|e| format!("Failed to write palette file: {e}"))

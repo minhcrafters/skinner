@@ -1,4 +1,3 @@
-/// PNG import/export for Minecraft skin files.
 use crate::skin::SkinTexture;
 use std::path::Path;
 

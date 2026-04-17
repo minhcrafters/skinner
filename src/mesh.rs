@@ -1,5 +1,3 @@
-/// 3D mesh generation for the Minecraft player model.
-/// Generates box-based geometry with correct UV mapping for each body part.
 use crate::uv_map::BodyPartUV;
 
 #[repr(C)]
@@ -33,7 +31,6 @@ impl MeshData {
         }
     }
 
-    /// Append another mesh's data into this one
     pub fn append(&mut self, other: &MeshData) {
         let base = self.vertices.len() as u32;
         self.vertices.extend_from_slice(&other.vertices);
@@ -42,7 +39,6 @@ impl MeshData {
         }
     }
 
-    /// Get vertex data as a flat f32 slice for GL upload
     pub fn vertex_bytes(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
@@ -52,7 +48,6 @@ impl MeshData {
         }
     }
 
-    /// Get index data as bytes
     pub fn index_bytes(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
@@ -63,15 +58,6 @@ impl MeshData {
     }
 }
 
-/// Generate a box mesh with the given origin (center), size, and UV mapping.
-///
-/// The box is axis-aligned with faces:
-/// - Front:  +Z normal
-/// - Back:   -Z normal
-/// - Right:  +X normal (character's left from front view)
-/// - Left:   -X normal (character's right from front view)
-/// - Top:    +Y normal
-/// - Bottom: -Y normal
 fn make_box(origin: [f32; 3], size: [f32; 3], uvs: &BodyPartUV) -> MeshData {
     let [ox, oy, oz] = origin;
     let [sx, sy, sz] = [size[0] / 2.0, size[1] / 2.0, size[2] / 2.0];
@@ -177,11 +163,6 @@ fn add_face(
 
 // ──── Player Model Generation ────
 
-/// Model centered at origin, total height ~32 units
-/// Legs: y = -16 to -4   (12 high)
-/// Body: y = -4  to  8   (12 high)
-/// Head: y =  8  to  16  (8 high)
-/// Arms: y = -4  to  8   (same as body)
 use crate::uv_map;
 
 pub struct PlayerModel {
@@ -199,7 +180,6 @@ pub struct PlayerModel {
     pub left_pant: MeshData,
 }
 
-/// Visibility settings for body parts
 #[derive(PartialEq, Clone)]
 pub struct PartVisibility {
     pub head: bool,
@@ -316,9 +296,6 @@ impl PlayerModel {
         }
     }
 
-    /// Combine all visible parts into a single mesh for rendering.
-    /// Returns (mesh, base_index_count) where base_index_count is the split
-    /// point between base and overlay indices for two-pass rendering.
     pub fn combined_mesh(&self, vis: &PartVisibility) -> (MeshData, i32) {
         let mut combined = MeshData::new();
 

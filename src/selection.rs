@@ -1,35 +1,20 @@
-/// Selection system: rectangular selection with floating pixel buffer,
-/// move, copy/paste, flip, rotate, stretch, and skew transforms.
 use crate::history::{PixelChange, SelectionSnapshot};
 use crate::skin::SkinTexture;
 
-/// A rectangular selection with an optional floating pixel buffer.
 pub struct Selection {
-    /// Whether a selection is currently active
     pub active: bool,
-    /// Selection rectangle position (top-left corner in skin pixel coords)
     pub x: i32,
     pub y: i32,
-    /// Selection dimensions
     pub w: u32,
     pub h: u32,
-    /// Floating pixel buffer (RGBA, row-major, w*h entries)
-    /// None = selection outline only (not yet lifted), Some = floating/lifted pixels
     pub pixels: Option<Vec<[u8; 4]>>,
-    /// The pixels that were under the selection when it was cut (for cancel/restore)
     original_pixels: Option<Vec<[u8; 4]>>,
-    /// Original position where cut happened (for cancel/restore)
     original_x: i32,
     original_y: i32,
-    /// Clipboard buffer for Ctrl+C / Ctrl+V
     clipboard: Option<ClipboardEntry>,
-    /// Whether we're currently drag-defining a new selection
     pub defining: bool,
-    /// Start of the definition drag
     pub define_start: Option<(u32, u32)>,
-    /// Whether the user is currently dragging the floating selection
     pub dragging: bool,
-    /// Offset from mouse to selection origin when drag started
     pub drag_offset: (i32, i32),
 }
 
@@ -59,7 +44,6 @@ impl Selection {
         }
     }
 
-    /// Check if a pixel coordinate is inside the current selection
     pub fn contains(&self, px: i32, py: i32) -> bool {
         self.active
             && px >= self.x
@@ -68,8 +52,6 @@ impl Selection {
             && py < self.y + self.h as i32
     }
 
-    /// Take a snapshot of the current floating buffer state for undo/redo.
-    /// Returns None if there's no floating selection.
     pub fn snapshot(&self) -> Option<SelectionSnapshot> {
         self.pixels.as_ref().map(|px| SelectionSnapshot {
             pixels: px.clone(),
@@ -80,7 +62,6 @@ impl Selection {
         })
     }
 
-    /// Restore a previously captured snapshot (used by undo/redo).
     pub fn restore_snapshot(&mut self, snap: &SelectionSnapshot) {
         self.active = true;
         self.pixels = Some(snap.pixels.clone());
@@ -90,7 +71,6 @@ impl Selection {
         self.y = snap.y;
     }
 
-    /// Deactivate the selection without producing pixel changes (used by undo/redo).
     pub fn deactivate(&mut self) {
         self.active = false;
         self.pixels = None;
@@ -100,8 +80,6 @@ impl Selection {
         self.dragging = false;
     }
 
-    /// Create a selection from a drag rectangle and cut pixels from the skin.
-    /// Returns pixel changes (the area being cleared to transparent).
     pub fn select_and_cut(
         &mut self,
         x0: u32,
@@ -166,8 +144,6 @@ impl Selection {
         changes
     }
 
-    /// Commit (stamp) the floating selection back onto the skin.
-    /// Returns pixel changes for undo.
     pub fn commit(&mut self, skin: &mut SkinTexture) -> Vec<PixelChange> {
         let mut changes = Vec::new();
         if let Some(ref pixels) = self.pixels {
@@ -199,8 +175,6 @@ impl Selection {
         changes
     }
 
-    /// Cancel the selection and restore original pixels.
-    /// Returns pixel changes for the restoration.
     pub fn cancel(&mut self, skin: &mut SkinTexture) -> Vec<PixelChange> {
         let mut changes = Vec::new();
         if let Some(ref original) = self.original_pixels {
@@ -229,7 +203,6 @@ impl Selection {
         changes
     }
 
-    /// Clear all selection state
     fn clear(&mut self) {
         self.active = false;
         self.pixels = None;
@@ -243,7 +216,6 @@ impl Selection {
         self.h = 0;
     }
 
-    /// Deselect: commit if floating, otherwise just clear
     pub fn deselect(&mut self, skin: &mut SkinTexture) -> Vec<PixelChange> {
         if self.pixels.is_some() {
             self.commit(skin)
@@ -253,7 +225,6 @@ impl Selection {
         }
     }
 
-    /// Copy the floating buffer to the clipboard
     pub fn copy_to_clipboard(&mut self) {
         if let Some(ref pixels) = self.pixels {
             self.clipboard = Some(ClipboardEntry {
@@ -264,8 +235,6 @@ impl Selection {
         }
     }
 
-    /// Paste from clipboard as a new floating selection at (0,0).
-    /// Commits any existing selection first.
     pub fn paste_from_clipboard(&mut self, skin: &mut SkinTexture) -> Vec<PixelChange> {
         let mut changes = Vec::new();
         // Commit existing selection first
@@ -292,14 +261,12 @@ impl Selection {
         changes
     }
 
-    /// Has clipboard content
     pub fn has_clipboard(&self) -> bool {
         self.clipboard.is_some()
     }
 
     // ──── Transforms ────
 
-    /// Flip the floating buffer horizontally
     pub fn flip_h(&mut self) {
         if let Some(ref mut pixels) = self.pixels {
             let w = self.w as usize;
@@ -312,7 +279,6 @@ impl Selection {
         }
     }
 
-    /// Flip the floating buffer vertically
     pub fn flip_v(&mut self) {
         if let Some(ref mut pixels) = self.pixels {
             let w = self.w as usize;
@@ -327,7 +293,6 @@ impl Selection {
         }
     }
 
-    /// Rotate the floating buffer 90° clockwise
     pub fn rotate_cw(&mut self) {
         if let Some(ref pixels) = self.pixels {
             let old_w = self.w as usize;
@@ -348,7 +313,6 @@ impl Selection {
         }
     }
 
-    /// Rotate the floating buffer 90° counter-clockwise
     pub fn rotate_ccw(&mut self) {
         if let Some(ref pixels) = self.pixels {
             let old_w = self.w as usize;
@@ -369,8 +333,6 @@ impl Selection {
         }
     }
 
-    /// Stretch (resize) the floating buffer to new dimensions using nearest-neighbor sampling.
-    /// Clamps to a minimum of 1×1 and maximum of 64×64.
     pub fn stretch(&mut self, new_w: u32, new_h: u32) {
         let new_w = new_w.clamp(1, 64);
         let new_h = new_h.clamp(1, 64);
@@ -393,10 +355,6 @@ impl Selection {
         }
     }
 
-    /// Skew the floating buffer horizontally. Each row is shifted by an amount
-    /// proportional to its Y position: row 0 stays put, the last row shifts
-    /// by `amount` pixels. Positive = shift right, negative = shift left.
-    /// The buffer widens by |amount| to accommodate the shift.
     pub fn skew_h(&mut self, amount: i32) {
         if amount == 0 {
             return;
@@ -431,10 +389,6 @@ impl Selection {
         }
     }
 
-    /// Skew the floating buffer vertically. Each column is shifted by an amount
-    /// proportional to its X position: column 0 stays put, the last column shifts
-    /// by `amount` pixels. Positive = shift down, negative = shift up.
-    /// The buffer grows taller by |amount| to accommodate the shift.
     pub fn skew_v(&mut self, amount: i32) {
         if amount == 0 {
             return;

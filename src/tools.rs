@@ -1,4 +1,3 @@
-/// Painting tools: pencil, eraser, bucket fill, color picker, line, rect, ellipse.
 use crate::history::PixelChange;
 use crate::skin::SkinTexture;
 
@@ -49,12 +48,9 @@ pub struct ToolState {
     pub brush_size: u8,
     pub mirror_x: bool,
     pub mirror_y: bool,
-    /// Track drag state for shape tools
     pub drag_start: Option<(u32, u32)>,
     pub last_pos: Option<(u32, u32)>,
-    /// Accumulated changes for the current stroke (committed on release)
     pub stroke_changes: Vec<PixelChange>,
-    /// Whether we're actively in a stroke
     pub stroking: bool,
 }
 
@@ -88,7 +84,6 @@ impl ToolState {
 
 // ──── Tool Operations ────
 
-/// Apply a single pencil/eraser dot, returns pixel changes
 pub fn apply_dot(
     x: u32,
     y: u32,
@@ -164,7 +159,6 @@ pub fn apply_dot(
     changes
 }
 
-/// Draw a line of dots between two points (Bresenham's algorithm)
 pub fn apply_line_dots(
     x0: u32,
     y0: u32,
@@ -188,7 +182,6 @@ pub fn apply_line_dots(
     changes
 }
 
-/// Flood fill from a starting point
 pub fn apply_bucket(
     x: u32,
     y: u32,
@@ -242,7 +235,6 @@ pub fn apply_bucket(
     changes
 }
 
-/// Draw a filled rectangle
 pub fn apply_rect(
     x0: u32,
     y0: u32,
@@ -279,7 +271,6 @@ pub fn apply_rect(
     changes
 }
 
-/// Draw an ellipse outline or filled
 pub fn apply_ellipse(
     x0: u32,
     y0: u32,

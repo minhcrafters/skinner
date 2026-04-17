@@ -1,7 +1,5 @@
 use eframe::egui;
 use eframe::glow;
-/// Main application struct. Owns all state, dispatches to sub-panels,
-/// handles keyboard shortcuts, and coordinates 2D/3D sync.
 use std::sync::Arc;
 
 use crate::camera::OrbitCamera;
@@ -26,21 +24,15 @@ pub struct SkinnerApp {
     renderer: Arc<egui::mutex::Mutex<Renderer3D>>,
     part_visibility: PartVisibility,
     selection: Selection,
-    /// Current file path for Save
     current_file: Option<std::path::PathBuf>,
-    /// Status message
     status_message: String,
-    /// Show 3D viewport
     show_3d: bool,
-    /// Error message to display
     error_msg: Option<String>,
-    /// Open reference images
     reference_images: Vec<ReferenceImage>,
 }
 
 impl SkinnerApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // Set up dark theme with custom visuals
         let mut visuals = egui::Visuals::dark();
         visuals.window_shadow = egui::epaint::Shadow::NONE;
         visuals.panel_fill = egui::Color32::from_rgb(30, 30, 35);
@@ -53,7 +45,6 @@ impl SkinnerApp {
         visuals.selection.bg_fill = egui::Color32::from_rgb(60, 90, 140);
         cc.egui_ctx.set_visuals(visuals);
 
-        // Set up fonts
         let mut style = (*cc.egui_ctx.style()).clone();
         style.spacing.item_spacing = egui::vec2(6.0, 4.0);
         style.spacing.window_margin = egui::Margin::same(8);
@@ -82,7 +73,6 @@ impl SkinnerApp {
 
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
         ctx.input(|i| {
-            // Tool shortcuts
             if i.key_pressed(egui::Key::B) && !i.modifiers.ctrl {
                 self.tool_state.current_tool = Tool::Pencil;
             }
@@ -111,7 +101,6 @@ impl SkinnerApp {
                 self.tool_state.swap_colors();
             }
 
-            // Brush size
             if i.key_pressed(egui::Key::OpenBracket) {
                 self.tool_state.brush_size = (self.tool_state.brush_size.saturating_sub(1)).max(1);
             }
@@ -527,12 +516,10 @@ impl SkinnerApp {
         let available = ui.available_size();
         let viewport_size = egui::vec2(available.x.max(200.0), available.y.max(200.0));
 
-        // Background color for 3D viewport
         let bg_color = egui::Color32::from_rgb(45, 45, 55);
         let (rect, response) = ui.allocate_exact_size(viewport_size, egui::Sense::click_and_drag());
         ui.painter().rect_filled(rect, 0.0, bg_color);
 
-        // Handle camera input
         if response.dragged_by(egui::PointerButton::Primary) {
             let delta = response.drag_delta();
             self.camera.orbit(-delta.x, delta.y);
@@ -546,7 +533,6 @@ impl SkinnerApp {
             self.camera.zoom(scroll * 0.005);
         }
 
-        // Compute MVP
         let aspect = rect.width() / rect.height();
         let mvp = self.camera.mvp(aspect);
         let mvp_array: [f32; 16] = mvp.to_cols_array();
@@ -587,7 +573,6 @@ impl SkinnerApp {
             renderer.set_visibility(self.part_visibility.clone());
         }
 
-        // Paint callback for 3D rendering
         let renderer = Arc::clone(&self.renderer);
         let screen_size = ui.ctx().screen_rect().size();
         let pixels_per_point = ui.ctx().pixels_per_point();
@@ -603,7 +588,6 @@ impl SkinnerApp {
             (screen_size.y * pixels_per_point) as u32,
         ];
 
-        // Set viewport in physical pixels
         let vp_x = (rect.left() * pixels_per_point) as i32;
         let vp_y = ((screen_size.y - rect.bottom()) * pixels_per_point) as i32;
         let vp_w = (rect.width() * pixels_per_point) as i32;
@@ -622,7 +606,6 @@ impl SkinnerApp {
         };
         ui.painter().add(callback);
 
-        // Label
         ui.painter().text(
             rect.left_top() + egui::vec2(8.0, 8.0),
             egui::Align2::LEFT_TOP,
@@ -650,7 +633,6 @@ impl eframe::App for SkinnerApp {
                 });
         }
 
-        // Reference images
         for ref_img in &mut self.reference_images {
             if let Some(color) = ref_img.show_window(ctx) {
                 self.tool_state.primary_color = color;
@@ -658,12 +640,10 @@ impl eframe::App for SkinnerApp {
         }
         self.reference_images.retain(|r| r.open);
 
-        // Menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             self.menu_bar(ui);
         });
 
-        // Status bar
         egui::TopBottomPanel::bottom("status_bar")
             .exact_height(24.0)
             .show(ctx, |ui| {
@@ -685,7 +665,6 @@ impl eframe::App for SkinnerApp {
                             ui.label(region.as_str());
                         }
                     }
-                    // Selection info
                     if self.selection.active {
                         ui.separator();
                         ui.label(format!(
@@ -702,7 +681,6 @@ impl eframe::App for SkinnerApp {
                 });
             });
 
-        // Tool panel (left)
         egui::SidePanel::left("tool_panel")
             .default_width(140.0)
             .min_width(120.0)
@@ -729,7 +707,6 @@ impl eframe::App for SkinnerApp {
                 }
             });
 
-        // Properties panel (right)
         egui::SidePanel::right("properties_panel")
             .default_width(180.0)
             .min_width(150.0)
@@ -749,14 +726,11 @@ impl eframe::App for SkinnerApp {
                 });
             });
 
-        // Central area: 2D canvas and/or 3D viewport
         egui::CentralPanel::default().show(ctx, |ui| {
             if self.show_3d {
-                // Split view: 2D on top, 3D on bottom
                 let total_height = ui.available_height();
                 let split = total_height * 0.55;
 
-                // 2D Canvas area
                 ui.allocate_ui(egui::vec2(ui.available_width(), split), |ui| {
                     egui::Frame::NONE
                         .fill(egui::Color32::from_rgb(25, 25, 30))
@@ -775,10 +749,8 @@ impl eframe::App for SkinnerApp {
 
                 ui.separator();
 
-                // 3D Viewport
                 self.show_3d_viewport(ui);
             } else {
-                // Full 2D canvas
                 egui::Frame::NONE
                     .fill(egui::Color32::from_rgb(25, 25, 30))
                     .show(ui, |ui| {

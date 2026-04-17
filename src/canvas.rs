@@ -3,8 +3,6 @@ use crate::selection::Selection;
 use crate::skin::SkinTexture;
 use crate::tools::{self, Tool, ToolState};
 use crate::uv_map;
-/// 2D canvas panel: renders the 64×64 skin texture with zoom, grid, region labels,
-/// and handles mouse interaction for painting tools.
 use eframe::egui;
 
 pub struct CanvasState {
@@ -15,7 +13,6 @@ pub struct CanvasState {
     pub hovered_pixel: Option<(u32, u32)>,
     pub hovered_region: Option<String>,
     pub texture_handle: Option<egui::TextureHandle>,
-    /// Pan offset in screen pixels (allows dragging the canvas freely)
     pub pan_offset: egui::Vec2,
 }
 
@@ -34,8 +31,6 @@ impl CanvasState {
     }
 }
 
-/// Render the 2D canvas and handle tool interaction.
-/// Returns true if the skin was modified.
 pub fn show_canvas(
     ui: &mut egui::Ui,
     skin: &mut SkinTexture,
@@ -81,7 +76,6 @@ pub fn show_canvas(
     let available = ui.available_size();
     let canvas_pixel_size = egui::vec2(64.0 * canvas.zoom, 64.0 * canvas.zoom);
 
-    // Allocate the full available area for interaction (pan, paint, hover)
     let (response, painter) = ui.allocate_painter(available, egui::Sense::click_and_drag());
     let interaction_rect = response.rect;
 
@@ -89,7 +83,6 @@ pub fn show_canvas(
     let canvas_origin = interaction_rect.left_top() + canvas.pan_offset;
     let canvas_rect = egui::Rect::from_min_size(canvas_origin, canvas_pixel_size);
 
-    // Handle panning with middle mouse button or right mouse button
     if response.dragged_by(egui::PointerButton::Middle)
         || response.dragged_by(egui::PointerButton::Secondary)
     {
@@ -111,10 +104,8 @@ pub fn show_canvas(
         }
     }
 
-    // Draw checkerboard background for transparency
     draw_checkerboard(&painter, canvas_rect, canvas.zoom);
 
-    // Draw the skin texture
     if let Some(ref tex) = canvas.texture_handle {
         painter.image(
             tex.id(),
@@ -124,7 +115,6 @@ pub fn show_canvas(
         );
     }
 
-    // Draw floating selection preview (the lifted pixels rendered on top)
     if selection.active {
         if let Some(ref pixels) = selection.pixels {
             for dy in 0..selection.h {
@@ -152,12 +142,10 @@ pub fn show_canvas(
         }
     }
 
-    // Draw grid
     if canvas.show_grid && canvas.zoom >= 4.0 {
         draw_grid(&painter, canvas_rect, canvas.zoom);
     }
 
-    // Draw region outlines and labels
     if canvas.show_region_labels {
         draw_region_labels(
             &painter,
@@ -168,11 +156,9 @@ pub fn show_canvas(
         );
     }
 
-    // Draw selection marching ants
     if selection.active {
         draw_selection_outline(&painter, canvas_rect, canvas.zoom, selection, ctx);
     }
-    // Draw selection-defining preview rectangle
     if selection.defining {
         if let (Some((sx, sy)), Some(pos)) = (selection.define_start, response.hover_pos()) {
             let local = pos - canvas_rect.left_top();
@@ -203,7 +189,6 @@ pub fn show_canvas(
         }
     }
 
-    // Handle hover
     canvas.hovered_pixel = None;
     canvas.hovered_region = None;
     if let Some(pos) = response.hover_pos() {
@@ -216,7 +201,6 @@ pub fn show_canvas(
             canvas.hovered_pixel = Some((px, py));
             canvas.hovered_region = uv_map::region_at_pixel(px, py, skin.model == crate::skin::SkinModel::Slim);
 
-            // Draw hover highlight
             let cell_rect = egui::Rect::from_min_size(
                 canvas_rect.left_top()
                     + egui::vec2(px as f32 * canvas.zoom, py as f32 * canvas.zoom),
@@ -240,7 +224,6 @@ pub fn show_canvas(
             if response.drag_started_by(egui::PointerButton::Primary) {
                 if selection.active && selection.pixels.is_some() && selection.contains(px_i, py_i)
                 {
-                    // Start dragging the floating selection
                     selection.dragging = true;
                     selection.drag_offset = (px_i - selection.x, py_i - selection.y);
                 } else {
@@ -258,7 +241,6 @@ pub fn show_canvas(
                             modified = true;
                         }
                     }
-                    // Start defining a new selection
                     selection.defining = true;
                     selection.define_start = Some((px, py));
                 }
@@ -266,7 +248,6 @@ pub fn show_canvas(
 
             if response.dragged_by(egui::PointerButton::Primary) {
                 if selection.dragging {
-                    // Move the floating selection
                     let new_x = px_i - selection.drag_offset.0;
                     let new_y = py_i - selection.drag_offset.1;
                     selection.x = new_x;
@@ -316,7 +297,6 @@ pub fn show_canvas(
     // ──── Paint tool interaction (non-select tools) ────
     if tool_state.current_tool != Tool::Select {
         if let Some((px, py)) = canvas.hovered_pixel {
-            // Color picker on click
             if tool_state.current_tool == Tool::ColorPicker && response.clicked() {
                 tool_state.primary_color = skin.get_pixel(px, py);
                 tool_state.current_tool = Tool::Pencil;
@@ -477,7 +457,6 @@ pub fn draw_checkerboard(painter: &egui::Painter, rect: egui::Rect, zoom: f32) {
     let cols = (rect.width() / check_size).ceil() as i32;
     let rows = (rect.height() / check_size).ceil() as i32;
 
-    // Only draw if not too many cells
     if cols * rows > 10000 {
         return;
     }
@@ -505,7 +484,6 @@ fn draw_grid(painter: &egui::Painter, rect: egui::Rect, zoom: f32) {
         let x = rect.left() + i as f32 * zoom;
         let y = rect.top() + i as f32 * zoom;
 
-        // Use thicker lines for region boundaries (every 4 or 8 pixels)
         let stroke = if i % 8 == 0 {
             egui::Stroke::new(1.5, region_color)
         } else if i % 4 == 0 {
@@ -514,12 +492,10 @@ fn draw_grid(painter: &egui::Painter, rect: egui::Rect, zoom: f32) {
             egui::Stroke::new(0.5, grid_color)
         };
 
-        // Vertical
         painter.line_segment(
             [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
             stroke,
         );
-        // Horizontal
         painter.line_segment(
             [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
             stroke,
@@ -538,7 +514,6 @@ fn draw_region_labels(painter: &egui::Painter, rect: egui::Rect, zoom: f32, show
             egui::vec2(lr.rect.w as f32 * zoom, lr.rect.h as f32 * zoom),
         );
 
-        // Draw region outline
         let alpha = if lr.is_overlay { 120 } else { 180 };
         let outline_color =
             egui::Color32::from_rgba_unmultiplied(lr.color.r(), lr.color.g(), lr.color.b(), alpha);
@@ -549,7 +524,6 @@ fn draw_region_labels(painter: &egui::Painter, rect: egui::Rect, zoom: f32, show
             egui::StrokeKind::Middle,
         );
 
-        // Draw label if region is large enough
         if region_rect.width() > 20.0 && region_rect.height() > 12.0 {
             let font = egui::FontId::proportional(9.0_f32.min(zoom * 0.8));
             let text_color = egui::Color32::from_rgba_unmultiplied(
@@ -608,7 +582,6 @@ fn draw_shape_preview(
             let rx = ((x1 as f32 - x0 as f32).abs() / 2.0 + 0.5) * zoom;
             let ry = ((y1 as f32 - y0 as f32).abs() / 2.0 + 0.5) * zoom;
             let center = rect.left_top() + egui::vec2(cx, cy);
-            // Approximate ellipse with polygon
             let n = 32;
             let points: Vec<egui::Pos2> = (0..n)
                 .map(|i| {
@@ -622,7 +595,6 @@ fn draw_shape_preview(
     }
 }
 
-/// Draw animated marching-ants selection outline
 fn draw_selection_outline(
     painter: &egui::Painter,
     canvas_rect: egui::Rect,
@@ -640,16 +612,13 @@ fn draw_selection_outline(
         egui::vec2(sw, sh),
     );
 
-    // Animate the dash offset for marching ants effect
     let time = ctx.input(|i| i.time) as f32;
     let dash_len = 4.0;
     let offset = (time * 8.0) % (dash_len * 2.0);
 
-    // Draw dashed selection border — two colors for visibility on any background
     let white = egui::Color32::WHITE;
     let black = egui::Color32::BLACK;
 
-    // First pass: solid black background stroke
     painter.rect_stroke(
         sel_rect,
         0.0,
@@ -657,15 +626,10 @@ fn draw_selection_outline(
         egui::StrokeKind::Middle,
     );
 
-    // Second pass: dashed white on top (simulated with short line segments)
     let edges = [
-        // Top edge
         (sel_rect.left_top(), sel_rect.right_top(), true),
-        // Right edge
         (sel_rect.right_top(), sel_rect.right_bottom(), false),
-        // Bottom edge
         (sel_rect.left_bottom(), sel_rect.right_bottom(), true),
-        // Left edge
         (sel_rect.left_top(), sel_rect.left_bottom(), false),
     ];
 
