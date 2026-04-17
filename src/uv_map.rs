@@ -198,18 +198,18 @@ pub fn labeled_rects(is_slim: bool) -> Vec<LabeledRect> {
     let base_colors = [
         ("Head", egui::Color32::from_rgb(255, 100, 100)),
         ("Body", egui::Color32::from_rgb(100, 255, 100)),
-        ("R.Arm", egui::Color32::from_rgb(100, 100, 255)),
-        ("L.Arm", egui::Color32::from_rgb(255, 255, 100)),
-        ("R.Leg", egui::Color32::from_rgb(255, 100, 255)),
-        ("L.Leg", egui::Color32::from_rgb(100, 255, 255)),
+        ("R. Arm", egui::Color32::from_rgb(100, 100, 255)),
+        ("L. Arm", egui::Color32::from_rgb(255, 255, 100)),
+        ("R. Leg", egui::Color32::from_rgb(255, 100, 255)),
+        ("L. Leg", egui::Color32::from_rgb(100, 255, 255)),
     ];
     let overlay_colors = [
         ("Hat", egui::Color32::from_rgb(200, 80, 80)),
         ("Jacket", egui::Color32::from_rgb(80, 200, 80)),
-        ("R.Sleeve", egui::Color32::from_rgb(80, 80, 200)),
-        ("L.Sleeve", egui::Color32::from_rgb(200, 200, 80)),
-        ("R.Pant", egui::Color32::from_rgb(200, 80, 200)),
-        ("L.Pant", egui::Color32::from_rgb(80, 200, 200)),
+        ("R. Sleeve", egui::Color32::from_rgb(80, 80, 200)),
+        ("L. Sleeve", egui::Color32::from_rgb(200, 200, 80)),
+        ("R. Pant", egui::Color32::from_rgb(200, 80, 200)),
+        ("L. Pant", egui::Color32::from_rgb(80, 200, 200)),
     ];
 
     let base_parts = [
